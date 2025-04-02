@@ -15,19 +15,19 @@ public class ConexaoBancoDeDados {
     private String senha;
 
     public ConexaoBancoDeDados(){
-        URL_BancoDeDados = "jdbc:mysql://localhost:3306/sistema_cadastro";
+        URL_BancoDeDados = "jdbc:mysql://localhost:3306/a";
         usuario = "root";
         senha = "root";
     }
 
-    public void IniciarConexao(){
+    public String IniciarConexao(){
         try{
             Class.forName("com.mysql.cj.jdbc.Driver");
             conexao = DriverManager.getConnection(URL_BancoDeDados, usuario, senha);
-            System.out.println("Funcionou");
+            return "Funcionou";
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Deu errado");
+            return "Deu errado";
         }
     }
 
@@ -57,12 +57,12 @@ public class ConexaoBancoDeDados {
             psInsert.setDouble(11, objetoPessoa.getPeso());
             psInsert.setDouble(12, objetoPessoa.getImc());
     
-            psInsert.executeUpdate();
+            psInsert.execute();
             EncerrarConexao();
             
-            return "Alteração Realizado com Sucesso!";
+            return "Inserção Realizado com Sucesso!";
         } else {
-            return "Erro! Alteração não realizada";
+            return "Erro ao acessar o Banco de Dados. Tente novamente!";
         }
     }
     
@@ -70,16 +70,31 @@ public class ConexaoBancoDeDados {
         IniciarConexao();
     
         if (conexao != null) {
-            PreparedStatement psInsert = conexao.prepareStatement("UPDATE Pessoa SET (nome=?, endereco=?, telefone=?, cpf=?, tipo_sanguineo=?, fator_rh=?, curso=?, contato_emergencia=?, telefone_emergencia=?, altura=?, peso=?, imc=?) WHERE pessoa.id = " + id);
+            PreparedStatement psInsert = conexao.prepareStatement("UPDATE Pessoa SET nome=?, endereco=?, telefone=?, cpf=?, tipo_sanguineo=?, fator_rh=?, curso=?, contato_emergencia=?, telefone_emergencia=?, altura=?, peso=?, imc=? WHERE pessoa.id = " + id);    
+            String telefone = "";
+            String cpf = "";
+            String telefoneEmergencia = "";
+
+            for(int i = 0; i < objetoPessoa.getTelefone().length(); i++) {
+                if(objetoPessoa.getTelefone().charAt(i) != '(' && objetoPessoa.getTelefone().charAt(i) != ')' && objetoPessoa.getTelefone().charAt(i) != '-' && objetoPessoa.getTelefone().charAt(i) != ' ') telefone += objetoPessoa.getTelefone().charAt(i);
+                if(objetoPessoa.getTelefoneContatoEmergencia().charAt(i) != '(' && objetoPessoa.getTelefoneContatoEmergencia().charAt(i) != ')' && objetoPessoa.getTelefoneContatoEmergencia().charAt(i) != '-' && objetoPessoa.getTelefoneContatoEmergencia().charAt(i) != ' ') telefoneEmergencia += objetoPessoa.getTelefoneContatoEmergencia().charAt(i);
+            }
+
+            for(int i = 0; i < objetoPessoa.getCpf().length(); i++) {
+                if(objetoPessoa.getCpf().charAt(i) != '-' && objetoPessoa.getCpf().charAt(i) != '.') cpf += objetoPessoa.getCpf().charAt(i);
+            }
+            
+            objetoPessoa.calcularIMC();
+
             psInsert.setString(1, objetoPessoa.getNome());
             psInsert.setString(2, objetoPessoa.getEndereco());
-            psInsert.setString(3, objetoPessoa.getTelefone());
-            psInsert.setString(4, objetoPessoa.getCpf());
+            psInsert.setString(3, telefone);
+            psInsert.setString(4, cpf);
             psInsert.setString(5, objetoPessoa.getTipoSanguineo());
             psInsert.setString(6, objetoPessoa.getFatorRh());
             psInsert.setString(7, objetoPessoa.getCurso());
             psInsert.setString(8, objetoPessoa.getContatoEmergencia());
-            psInsert.setString(9, objetoPessoa.getTelefoneContatoEmergencia());
+            psInsert.setString(9, telefoneEmergencia);
             psInsert.setDouble(10, objetoPessoa.getAltura());
             psInsert.setDouble(11, objetoPessoa.getPeso());
             psInsert.setDouble(12, objetoPessoa.getImc());
@@ -87,9 +102,9 @@ public class ConexaoBancoDeDados {
             psInsert.executeUpdate();
             EncerrarConexao();
             
-            return "Cadastro Realizado com Sucesso!";
+            return "Alteração Realizada com Sucesso!";
         } else {
-            return "Erro! Inserção não realizada";
+            return "Erro ao acessar o Banco de Dados. Tente novamente!";
         }
     }
 
@@ -104,7 +119,7 @@ public class ConexaoBancoDeDados {
             
             return "Remoção Realizada com Sucesso!";
         } else {
-            return "Erro! Removição não realizada";
+            return "Erro ao acessar o Banco de Dados. Tente novamente!";
         }
     }
 
@@ -138,8 +153,8 @@ public class ConexaoBancoDeDados {
             ResultSet relatorio = psInsert.executeQuery("SELECT * FROM Pessoa;");
             ArrayList<String> p = new ArrayList<>();
 
-            double maiorPeso = 0, menorPeso = Double.MAX_VALUE, mediaPeso = 0, menorAltura = 0, maiorAltura = Double.MAX_VALUE, mediaAlturas = 0, mediaIMCs = 0, maiorIMC = Double.MAX_VALUE, menorIMC = 0;
-            String nomeMaiorPeso = null, tipoSanguineoMaiorPeso = null, nomeMenorPeso = null, tipoSanguineoMenorPeso = null, nomeMaiorAltura = null, cursoMaiorAltura = null, nomeMenorAltura = null, cursoMenorAltura = null, nomeMaiorIMC, nomeMenorIMC;
+            double maiorPeso = 0, menorPeso = Double.MAX_VALUE, mediaPeso = 0, menorAltura = Double.MAX_VALUE, maiorAltura = 0, mediaAlturas = 0, mediaIMCs = 0, maiorIMC = 0, menorIMC = Double.MAX_VALUE;
+            String nomeMaiorPeso = null, tipoSanguineoMaiorPeso = null, nomeMenorPeso = null, tipoSanguineoMenorPeso = null, nomeMaiorAltura = null, cursoMaiorAltura = null, nomeMenorAltura = null, cursoMenorAltura = null, nomeMaiorIMC = null, nomeMenorIMC = null;
             int totalPessoas = 0;
 
             while(relatorio.next()) {
@@ -192,31 +207,25 @@ public class ConexaoBancoDeDados {
             p.add("Maior Altura: " + maiorAltura + " | Nome: " + nomeMaiorAltura + " | Curso: " + cursoMaiorAltura);
             p.add("Menor Altura: " + menorAltura + " | Nome: " + nomeMenorAltura + " | Curso: " + cursoMenorAltura);
             p.add("Media alturas: " + mediaAlturas);
-            p.add("" + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
-            p.add("Maior peso: " + maiorPeso + " | Nome: " + nomeMaiorPeso + " | Tipo Sanguineo: " + tipoSanguineoMaiorPeso);
+            p.add("Media IMCs: " + mediaIMCs);
+            p.add("Maior IMC: " + maiorIMC + " | Nome: " + nomeMaiorIMC);
+            p.add("Menor IMC: " + menorIMC + " | Nome: " + nomeMenorIMC);
 
             EncerrarConexao();
-            
             return p;
         } else {
             return null;
         }
     }
 
-    public ResultSet getInfoIMC(int id) throws SQLException {
+    public Pessoa getOne(int id) throws SQLException {
         IniciarConexao();
     
         if (conexao != null) {
             Statement psInsert = conexao.createStatement();
-            ResultSet pessoa = psInsert.executeQuery("SELECT * FROM Pessoa WHERE id = " + id + ";");
+            ResultSet resultado = psInsert.executeQuery("SELECT * FROM Pessoa WHERE id = " + id + ";");
+            resultado.next();
+            Pessoa pessoa = new Pessoa(resultado.getString("nome"), resultado.getString("endereco"), resultado.getString("telefone"), resultado.getString("cpf"), resultado.getString("tipo_sanguineo"), resultado.getString("fator_rh"), resultado.getString("curso"), resultado.getString("contato_emergencia"), resultado.getString("telefone_emergencia"), Double.parseDouble(resultado.getString("altura")), Double.parseDouble(resultado.getString("peso")));
 
             EncerrarConexao();
             

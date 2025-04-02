@@ -34,6 +34,7 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
     //private JLabel LabelValorIMC;
     private JLabel LabelResultadoPesquisa;
     private JLabel LabelMensagemIMC;
+    private JLabel TextIMC;
 
     
     private JTextField TextNome;
@@ -47,7 +48,6 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
     private JFormattedTextField TextTelefoneContatoE;
     private JTextField TextAltura;
     private JTextField TextPeso;
-    private JTextField TextIMC;
     private JTextField Textid;
     
     
@@ -116,7 +116,6 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
         TextContatoDeEmergencia = new JTextField();
         TextAltura = new JTextField();
         TextPeso = new JTextField();
-        TextIMC = new JTextField();
         Textid = new JTextField();
         
         
@@ -137,15 +136,16 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
         LabelMensagemIMC = new JLabel("Seu IMC é de: ");
         LabelId = new JLabel("ID");
         LabelResultadoPesquisa = new JLabel("Resultado da pesquisa no Banco de Dados");
+        TextIMC = new JLabel("");
         //LabelValorIMC = new JLabel("imc");
         
         
         botaoCalcularIMC = new JButton("Calcular IMC");
-        botaoCadastrar = new JButton("Cadastrar");
+        botaoCadastrar = new JButton("Inserir");
         botaoAlterar = new JButton("Alterar");
         botaoRemover = new JButton("Remover");
         botaoListagem = new JButton("Listagem");
-        botaoRelatorio = new JButton("Relatório");
+        botaoRelatorio = new JButton("Relatorio");
         
         listaPesquisaBancoDeDados = new JTextArea();
         scrollPesquisaBancoDeDados = new JScrollPane(listaPesquisaBancoDeDados);
@@ -246,18 +246,28 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
         botaoRelatorio.addActionListener(this);
     }
 
-
     public void actionPerformed(ActionEvent e){
         if(e.getActionCommand().equals("Inserir")){
-//String cpf, String tipoSanguineo, String fatorRh, String curso, String contatoEmergencia, String telefoneContatoEmergencia, double altura, double peso) {
-
-            Pessoa objeto = new Pessoa(TextNome.getText(), TextEndereco.getText(), TextTelefone.getText(), TextCPF.getText(), (String)comboBoxSanguineo.getSelectedItem(), (String)comboBoxFatorRH.getSelectedItem(), (String)comboBoxCurso.getSelectedItem(), TextContatoDeEmergencia.getText(), TextTelefoneContatoE.getText(), Double.parseDouble(TextAltura.getText()), Double.parseDouble(TextPeso.getText()));
-
             try{
+                String telefone = "";
+                String cpf = "";
+                String telefoneEmergencia = "";
 
+                for(int i = 0; i < TextTelefone.getText().length(); i++) {
+                    if(TextTelefone.getText().charAt(i) != '(' && TextTelefone.getText().charAt(i) != ')' && TextTelefone.getText().charAt(i) != '-' && TextTelefone.getText().charAt(i) != ' ') telefone += TextTelefone.getText().charAt(i);
+                    if(TextTelefoneContatoE.getText().charAt(i) != '(' && TextTelefoneContatoE.getText().charAt(i) != ')' && TextTelefoneContatoE.getText().charAt(i) != '-' && TextTelefoneContatoE.getText().charAt(i) != ' ') telefoneEmergencia += TextTelefoneContatoE.getText().charAt(i);
+                }
+
+                for(int i = 0; i < TextCPF.getText().length(); i++) {
+                    if(TextCPF.getText().charAt(i) != '-' && TextCPF.getText().charAt(i) != '.') cpf += TextCPF.getText().charAt(i);
+                }
+
+                System.out.println(telefone);
+                Pessoa objeto = new Pessoa(TextNome.getText(), TextEndereco.getText(), telefone, cpf, (String)comboBoxSanguineo.getSelectedItem(), (String)comboBoxFatorRH.getSelectedItem(), (String)comboBoxCurso.getSelectedItem(), TextContatoDeEmergencia.getText(), telefoneEmergencia, Double.parseDouble(TextAltura.getText()), Double.parseDouble(TextPeso.getText()));
                 ConexaoBancoDeDados objBancoDeDados = new ConexaoBancoDeDados();
                 String mensagem = objBancoDeDados.InserirDadosPessoa(objeto);
-                LabelMensagem.setText(mensagem);
+                JOptionPane.showMessageDialog(this, mensagem);
+                // LabelMensagem.setText(mensagem);
             }
             catch (SQLException e1){
                 e1.printStackTrace();
@@ -269,7 +279,8 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
                 ConexaoBancoDeDados objBancoDeDados = new ConexaoBancoDeDados();
                 int id = Integer.parseInt(Textid.getText());
                 String mensagem = objBancoDeDados.RemoverPessoa(id);
-                LabelMensagem.setText(mensagem);
+                JOptionPane.showMessageDialog(this, mensagem);
+                // LabelMensagem.setText(mensagem);
             }
             catch (SQLException e1){
                 e1.printStackTrace();
@@ -282,7 +293,8 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
                 ConexaoBancoDeDados objBancoDeDados = new ConexaoBancoDeDados();
                 int id = Integer.parseInt(Textid.getText());
                 String mensagem = objBancoDeDados.AlterarDadosPessoa(objeto, id);
-                LabelMensagem.setText(mensagem);
+                JOptionPane.showMessageDialog(this, mensagem);
+                // LabelMensagem.setText(mensagem);
             }
             catch (SQLException e1){
                 e1.printStackTrace();
@@ -292,12 +304,43 @@ public class InterfaceGrafica extends JFrame implements ActionListener{
         if(e.getActionCommand().equals("Relatorio")){
             try{
                 ConexaoBancoDeDados objBancoDeDados = new ConexaoBancoDeDados();
-                ArrayList<Pessoa> relatorioBancoDeDados = objBancoDeDados.Relatorio();
+                ArrayList<String> relatorioBancoDeDados = objBancoDeDados.Relatorio();
+                
+                listaPesquisaBancoDeDados.setText("");
+                for(String texto: relatorioBancoDeDados){
+                    listaPesquisaBancoDeDados.append(texto + "\n");
+                }
+                System.out.println(relatorioBancoDeDados);
+            } catch(SQLException e1){
+                e1.printStackTrace();
+            }
+        }
+
+        if(e.getActionCommand().equals("Listagem")){
+            try{
+                ConexaoBancoDeDados objBancoDeDados = new ConexaoBancoDeDados();
+                ArrayList<Pessoa> listagemBancoDeDados = objBancoDeDados.ListarPessoas();
 
                 listaPesquisaBancoDeDados.setText("");
-                for(Pessoa texto: relatorioBancoDeDados){
-                    listaPesquisaBancoDeDados.append(texto + "\n\n");
+                for(Pessoa pessoa : listagemBancoDeDados){
+                    String info = pessoa.getNome() + " | " + pessoa.getEndereco() + pessoa.getTelefone() + " | " + pessoa.getAltura() + " | " + pessoa.getCpf() + " | " + pessoa.getCurso() + " | " + pessoa.getContatoEmergencia() + " | " + pessoa.getTelefoneContatoEmergencia() + " | " + pessoa.getImc() + " | " + pessoa.getTipoSanguineo() + pessoa.getFatorRh();
+                    listaPesquisaBancoDeDados.append(info + "\n\n");
                 }
+            } catch(SQLException e1){
+                e1.printStackTrace();
+            }
+        }
+
+        if(e.getActionCommand().equals("Calcular IMC")){
+            try{
+                ConexaoBancoDeDados objBancoDeDados = new ConexaoBancoDeDados();
+                Pessoa pessoa = objBancoDeDados.getOne(Integer.parseInt(Textid.getText()));
+
+                pessoa.calcularIMC();
+
+                TextIMC.setText("" + pessoa.getImc());
+                String mensagem = pessoa.getImc() < 18.5 ? "Você está abaixo do peso ideal!" : pessoa.getImc() > 25 ? "Você está acima do peso ideal!" : "Peso ideal";
+                JOptionPane.showMessageDialog(this, mensagem);
             } catch(SQLException e1){
                 e1.printStackTrace();
             }
